@@ -1,0 +1,22 @@
+{
+  "name": "video-preview",
+  "version": "1.0.0",
+  "description": "Create a video preview using HTML only",
+  "main": "index.js",
+  "scripts": {
+    "start": "reserve"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ArnaudBuchholz/video-preview.git"
+  },
+  "author": "Arnaud Buchholz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ArnaudBuchholz/video-preview/issues"
+  },
+  "homepage": "https://github.com/ArnaudBuchholz/video-preview#readme",
+  "devDependencies": {
+    "reserve": "^1.15.0"
+  }
+}
