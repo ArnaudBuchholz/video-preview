@@ -1,18 +1,75 @@
 <html>
   <head>
     <script>
-    function capture() {
-      var video = document.getElementById("v");
-      var canvas = document.getElementById("c");
-      canvas.getContext('2d').drawImage(video, 0, 0, 2000, 2000, 0, 0, 500, 500);
-    }
+const $ = id => document.getElementById(id)
+
+function load () {
+  const sourceUrl = $('source').value
+  console.log(`Loading ${sourceUrl}`)
+  const video = $('video')
+  const source = video.querySelector('source')
+  source.setAttribute('src', sourceUrl)
+  video.addEventListener('canplay', () => {
+    console.log(`Video ready, duration : ${video.duration}`)
+  }, { once: true })
+  video.load()
+}
+
+function play () {
+  $('video').play()
+}
+
+function pause () {
+  $('video').pause()
+}
+
+function seek (ratio) {
+  return new Promise(resolve => {
+    const video = $('video')
+    video.currentTime = video.duration * ratio
+    video.addEventListener('seeked', (event) => {
+      console.log('Video is at new position')
+      resolve()
+    }, { once: true })
+  })
+}
+
+async function preview () {
+  const steps = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1]
+  const canvas = $('canvas').getContext('2d')
+  const video = $('video')
+  let index = 0
+  for await (const ratio of steps) {
+    await seek(ratio)
+    canvas.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, (index % 2) * 500, Math.floor(index / 2) * 500, 500, 500)
+    ++index
+  }
+}
     </script>
   </head>
   <body>
-      <video id="v" autoplay="autoplay">
-          <source src="https://file-examples.com/storage/feb8f98f1d627c0dc94b8cf/2017/04/file_example_MP4_1920_18MG.mp4" type="video/mp4">
+      <label>Source :</label>
+      <input id="source" type="text" value="https://ia800300.us.archive.org/17/items/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4">
+      <input type="button" value="Load" onclick="load()"/>
+      <br>
+      <video id="video" autoplay="autoplay" width="400">
+          <source src="" type="video/mp4">
       </video>
-      <input type="button" value="Capture" onclick="capture()"/>
-      <canvas id="c" width="500" height="500"></canvas>
+      <br>
+      <input type="button" value="Play" onclick="play()"/>
+      <input type="button" value="Pause" onclick="pause()"/>
+      <input type="button" value="Preview" onclick="preview()"/>
+      <br>
+      <input type="button" value="0%" onclick="seek(0)"/>
+      <input type="button" value="12%" onclick="seek(0.125)"/>
+      <input type="button" value="25%" onclick="seek(0.25)"/>
+      <input type="button" value="37%" onclick="seek(0.375)"/>
+      <input type="button" value="50%" onclick="seek(0.5)"/>
+      <input type="button" value="62%" onclick="seek(0.625)"/>
+      <input type="button" value="75%" onclick="seek(0.75)"/>
+      <input type="button" value="88%" onclick="seek(0.875)"/>
+      <input type="button" value="100%" onclick="seek(1)"/>
+      <br>
+      <canvas id="canvas" width="1000" height="2500"></canvas>
   </body>
 </html>
