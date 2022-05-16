@@ -3,16 +3,15 @@
     <script>
 const $ = id => document.getElementById(id)
 
-function load () {
-  const sourceUrl = $('source').value
-  console.log(`Loading ${sourceUrl}`)
-  const video = $('video')
-  const source = video.querySelector('source')
-  source.setAttribute('src', sourceUrl)
-  video.addEventListener('canplay', () => {
-    console.log(`Video ready, duration : ${video.duration}`)
-  }, { once: true })
-  video.load()
+async function load () {
+  return new Promise(resolve => {
+    const sourceUrl = $('source').value
+    const video = $('video')
+    const source = video.querySelector('source')
+    source.setAttribute('src', sourceUrl)
+    video.addEventListener('canplay', () => resolve(), { once: true })
+    video.load()
+  })
 }
 
 function play () {
@@ -35,6 +34,7 @@ function seek (ratio) {
 }
 
 async function preview () {
+  await load()
   const steps = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1]
   const canvas = $('canvas').getContext('2d')
   const video = $('video')
