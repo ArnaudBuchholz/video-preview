@@ -27,49 +27,98 @@ function seek (ratio) {
     const video = $('video')
     video.currentTime = video.duration * ratio
     video.addEventListener('seeked', (event) => {
-      console.log('Video is at new position')
       resolve()
     }, { once: true })
   })
 }
 
+const PREVIEW_WIDTH = 160
+const PREVIEW_HEIGHT = 100
+const PER_ROW = 3
+const STEPS = [0.05, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 0.95]
+
 async function preview () {
   await load()
-  const steps = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1]
-  const canvas = $('canvas').getContext('2d')
+  pause()
+
   const video = $('video')
+  const { videoWidth, videoHeight } = video
+  const videoRatio = videoWidth / videoHeight
+
+  const previewRatio = PREVIEW_WIDTH / PREVIEW_HEIGHT
+  let previewWidth
+  let previewHeight
+  if (videoRatio > previewRatio) {
+    previewWidth = PREVIEW_WIDTH
+    previewHeight = Math.floor(PREVIEW_HEIGHT * previewRatio / videoRatio)
+  } else {
+    previewWidth = Math.floor(PREVIEW_WIDTH * videoRatio / previewRatio)
+    previewHeight = PREVIEW_HEIGHT
+  }
+
+  const canvas = $('preview')
+  canvas.width = previewWidth * PER_ROW
+  canvas.height = previewHeight * Math.ceil(STEPS.length / PER_ROW)
+
+  const canvasCtx = canvas.getContext('2d')
+  canvasCtx.fillStyle = "#0"
+  canvasCtx.fillRect(0, 0, canvas.width, canvas.height)
+
   let index = 0
-  for await (const ratio of steps) {
+  for await (const ratio of STEPS) {
     await seek(ratio)
-    canvas.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, (index % 2) * 500, Math.floor(index / 2) * 500, 500, 500)
+    canvasCtx.drawImage(video, 0, 0, videoWidth, videoHeight,
+      (index % PER_ROW) * previewWidth,
+      Math.floor(index / PER_ROW) * previewHeight,
+      previewWidth,
+      previewHeight
+    )
     ++index
   }
+
+  launchAnimation()
 }
+
+function launchAnimation () {
+  if (launchAnimation.id) {
+    clearInterval(launchAnimation.id)
+  }
+  const preview = $('preview')
+  const { width, height } = preview
+  const previewCtx = preview.getContext('2d')
+
+  const animWidth = width / PER_ROW
+  const animHeight = height / Math.ceil(STEPS.length / PER_ROW)
+
+  const animate = $('animate')
+  animate.width = animWidth
+  animate.height = animHeight
+  const animateCtx = animate.getContext('2d')
+
+  let step = -1
+  launchAnimation.id = setInterval(function () {
+    step = (step + 1) % STEPS.length
+    const x = step % PER_ROW
+    const y = Math.floor(step / PER_ROW)
+    animateCtx.drawImage(preview, x * animWidth, y * animHeight , animWidth, animHeight,
+      0, 0, animWidth, animHeight
+    )
+  }, 500)
+}
+
     </script>
   </head>
   <body>
       <label>Source :</label>
       <input id="source" type="text" value="https://ia800300.us.archive.org/17/items/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4">
-      <input type="button" value="Load" onclick="load()"/>
-      <br>
-      <video id="video" autoplay="autoplay" width="400">
-          <source src="" type="video/mp4">
-      </video>
-      <br>
-      <input type="button" value="Play" onclick="play()"/>
-      <input type="button" value="Pause" onclick="pause()"/>
       <input type="button" value="Preview" onclick="preview()"/>
       <br>
-      <input type="button" value="0%" onclick="seek(0)"/>
-      <input type="button" value="12%" onclick="seek(0.125)"/>
-      <input type="button" value="25%" onclick="seek(0.25)"/>
-      <input type="button" value="37%" onclick="seek(0.375)"/>
-      <input type="button" value="50%" onclick="seek(0.5)"/>
-      <input type="button" value="62%" onclick="seek(0.625)"/>
-      <input type="button" value="75%" onclick="seek(0.75)"/>
-      <input type="button" value="88%" onclick="seek(0.875)"/>
-      <input type="button" value="100%" onclick="seek(1)"/>
+      <canvas id="preview" width="0" height="0"></canvas>
       <br>
-      <canvas id="canvas" width="1000" height="2500"></canvas>
+      <canvas id="animate" width="0" height="0"></canvas>
+      <br>
+      <video id="video" autoplay="autoplay" width="400" style="display: none;">
+          <source src="" type="video/mp4">
+      </video>
   </body>
 </html>
